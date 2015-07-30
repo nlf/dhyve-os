@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# Starts docker
+#
+
+# Allow a few customizations from a config file
+test -r /etc/default/docker && . /etc/default/docker
+CGROUPS="perf_event net_cls freezer devices blkio memory cpuacct cpuset cpu"
+
+start() {
+    export DOCKER_RAMDISK=true
+    DOCKER_ARGS="$DOCKER_ARGS -d"
+
+    echo -n "Starting docker: "
+    umask 077
+
+    mkdir -p /sys/fs/cgroup
+    mount -t tmpfs none /sys/fs/cgroup
+    for i in $CGROUPS; do
+      mkdir -p /sys/fs/cgroup/$i
+      mount -t cgroup -o $i none /sys/fs/cgroup/$i
+    done
+
+    start-stop-daemon --start --quiet --background --make-pidfile --pidfile /var/run/docker.pid \
+        --startas /bin/sh -- -c "exec  /usr/local/bin/docker $DOCKER_ARGS >/var/log/docker.log 2>&1"
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+stop() {
+    echo -n "Stopping docker: "
+    start-stop-daemon -K -q -p /var/run/docker.pid
+    res=$?
+    for i in $CGROUPS; do
+      umount /sys/fs/cgroup/$i
+    done
+    umount /sys/fs/cgroup
+
+    [ $res = 0 ] && echo "OK" || echo "FAIL"
+}
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart|reload)
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?
