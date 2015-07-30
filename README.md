@@ -7,6 +7,8 @@ DhyveOS is a lightweight Linux distribution made specifically to run [Docker](ht
 * NFS share automounts to /Users
 * Docker runs on port 2375 without TLS
 * Designed for use with [dhyve](https://github.com/nlf/dhyve)
+* Default root password: dhyve
+* Default docker user password: docker
 
 ## Caveat Emptor
 
