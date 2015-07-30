@@ -2,7 +2,7 @@ all: output/rootfs.cpio.xz output/bzImage
 
 output/rootfs.cpio.xz output/bzImage: | output
 	@docker inspect dhyve-os-built >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "Built container missing, run 'make build' first"; exit 1; fi
-	@docker cp dhyve-os-built:/build/buildroot/output/images/$(@F) output/
+	docker cp dhyve-os-built:/build/buildroot/output/images/$(@F) output/
 
 build: config rootfs | ccache
 	docker build -t dhyve-os-build .
