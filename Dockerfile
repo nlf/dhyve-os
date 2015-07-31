@@ -26,7 +26,7 @@ RUN curl -L -o $ROOTFS/usr/local/bin/docker https://get.docker.io/builds/Linux/x
     chmod +x $ROOTFS/usr/local/bin/docker
 
 # Copy our custom overlay
-ENV VERSION 2.0.0
+ENV VERSION 1.0.0
 COPY rootfs $ROOTFS
 RUN echo $VERSION > $ROOTFS/etc/version
 
