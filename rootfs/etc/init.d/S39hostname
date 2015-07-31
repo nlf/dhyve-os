@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# Sets the hostname
+#
+
+start() {
+  echo -n "Setting hostname:"
+  grep -q "hostname=" /proc/cmdline
+  if [ $? -eq 0 ]; then
+    local hostname=$(cat /proc/cmdline | sed -n 's/^.*hostname=\([^ ]\+\).*$/\1/p')
+    if [ -n "$hostname" ]; then
+      echo "$hostname" > /etc/hostname
+      echo "127.0.0.1 localhost $hostname" > /etc/hosts
+      hostname -F /etc/hostname
+      echo "auto lo" > /etc/network/interfaces
+      echo "iface lo inet loopback" >> /etc/network/interfaces
+      echo "" >> /etc/network/interfaces
+      echo "auto eth0" >> /etc/network/interfaces
+      echo "iface eth0 inet dhcp" >> /etc/network/interfaces
+      echo "hostname $hostname" >> /etc/network/interfaces
+    fi
+  fi
+
+  echo "DONE"
+}
+
+stop() {
+  echo ""
+}
+
+restart() {
+  echo ""
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart|reload)
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?

@@ -1,15 +1,15 @@
 all: output/rootfs.cpio.xz output/bzImage
 
 output/rootfs.cpio.xz output/bzImage: | output
-	@docker inspect dhyve-os-built >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "Built container missing, run 'make build' first"; exit 1; fi
-	@docker cp dhyve-os-built:/build/buildroot/output/images/$(@F) output/
+	@docker inspect dhyve-os-built >/dev/null 2>&1; [ $$? -ne 0 ]; ${MAKE} build
+	docker cp dhyve-os-built:/build/buildroot/output/images/$(@F) output/
 
-build: config rootfs | ccache
+build: | ccache dl
 	docker build -t dhyve-os-build .
 	-docker rm dhyve-os-built
-	docker run -v ${PWD}/ccache:/build/buildroot/ccache --name=dhyve-os-built dhyve-os-build
+	docker run -v ${PWD}/ccache:/build/buildroot/ccache -v ${PWD}/dl:/build/buildroot/dl --name=dhyve-os-built dhyve-os-build
 
-output ccache:
+output ccache dl:
 	mkdir -p $@
 
 clean:
@@ -17,7 +17,7 @@ clean:
 	-docker rm dhyve-os-built
 
 distclean: clean
-	rm -rf ccache
+	rm -rf ccache dl
 	-docker rmi dhyve-os-build
 
 .phony: build clean distclean

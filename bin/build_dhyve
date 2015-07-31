@@ -3,6 +3,7 @@
 set -e
 
 cd /build/buildroot
+make oldconfig
 make
 rm /build/buildroot/output/images/rootfs.cpio
 tar cf /output.tar -C /build/buildroot/output/images .
