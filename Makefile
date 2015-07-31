@@ -5,8 +5,7 @@ output/rootfs.cpio.xz output/bzImage: | output
 	docker cp dhyve-os-built:/build/buildroot/output/images/$(@F) output/
 
 build: | ccache dl
-	-docker rmi dhyve-os-build
-	docker build -t dhyve-os-build .
+	docker build --no-cache -t dhyve-os-build .
 	-docker rm dhyve-os-built
 	docker run -v ${PWD}/ccache:/build/buildroot/ccache -v ${PWD}/dl:/build/buildroot/dl --name=dhyve-os-built dhyve-os-build
 
