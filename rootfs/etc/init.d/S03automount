@@ -51,6 +51,9 @@ start() {
 
     if [ -e "/mnt/${partname}/userdata.tar" ]; then
       tar xf /mnt/${partname}/userdata.tar -C /home/docker >/var/log/userdata.log 2>&1
+      chown -R docker:docker /home/docker
+      chmod 700 /home/docker/.ssh
+      chmod 600 /home/docker/.ssh/authorized_keys
       rm -f '/home/docker/dhyve, please format-me'
     fi
   fi
