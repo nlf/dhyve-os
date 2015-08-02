@@ -8,6 +8,7 @@ start() {
   grep -q "hostname=" /proc/cmdline
   if [ $? -eq 0 ]; then
     local hostname=$(cat /proc/cmdline | sed -n 's/^.*hostname=\([^ ]\+\).*$/\1/p')
+    local uuid=$(cat /proc/cmdline | sed -n 's/^.*uuid=\([^ ]\+\).*$/\1/p')
     if [ -n "$hostname" ]; then
       echo "$hostname" > /etc/hostname
       echo "127.0.0.1 localhost $hostname" > /etc/hosts
@@ -17,7 +18,7 @@ start() {
       echo "" >> /etc/network/interfaces
       echo "auto eth0" >> /etc/network/interfaces
       echo "iface eth0 inet dhcp" >> /etc/network/interfaces
-      echo "hostname $hostname" >> /etc/network/interfaces
+      echo "hostname $uuid" >> /etc/network/interfaces
     fi
   fi
 
