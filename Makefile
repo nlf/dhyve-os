@@ -1,23 +1,52 @@
-all: output/rootfs.cpio.xz output/bzImage
+TARGETS := output/rootfs.cpio.xz output/bzImage
+SOURCES := Dockerfile bin/build_dhyve \
+	config/buildroot config/kernel config/user \
+	rootfs/etc/default/docker \
+	rootfs/etc/init.d/S03automount \
+	rootfs/etc/init.d/S39hostname \
+	rootfs/etc/init.d/S41automount-nfs \
+	rootfs/etc/init.d/S51docker \
+	rootfs/etc/init.d/S52sysctl \
+	rootfs/etc/profile.d/dhyve.sh \
+	rootfs/etc/sudoers.d/docker \
+	rootfs/etc/sysctl.conf
 
-output/rootfs.cpio.xz output/bzImage: | output
-	@docker inspect dhyve-os-built >/dev/null 2>&1 || ${MAKE} build
-	docker cp dhyve-os-built:/build/buildroot/output/images/$(@F) output/
+BUILD_IMAGE     := dhyve-os-builder
+BUILD_CONTAINER := dhyve-os-built
 
-build: | ccache dl
-	docker build --no-cache -t dhyve-os-build .
-	-docker rm dhyve-os-built
-	docker run -v ${PWD}/ccache:/build/buildroot/ccache -v ${PWD}/dl:/build/buildroot/dl --name=dhyve-os-built dhyve-os-build
+BUILT := `docker ps -aq -f name=$(BUILD_CONTAINER) -f exited=0`
+
+all: $(TARGETS)
+
+$(TARGETS): build | output
+	docker cp $(BUILD_CONTAINER):/build/buildroot/output/images/$(@F) output/
+
+build: $(SOURCES) | ccache dl
+	$(eval SRC_UPDATED=$$(shell stat -f "%m" $^ | sort -gr | head -n1))
+	$(eval STR_CREATED=$$(shell docker inspect -f '{{.Created}}' $(BUILD_IMAGE) 2>/dev/null))
+	$(eval IMG_CREATED=$$(shell date -j -u -f "%F %T" "$$(STR_CREATED)" +"%s" 2>/dev/null \
+		|| echo 0))
+	@if [ "$(SRC_UPDATED)" -gt "$(IMG_CREATED)" ]; then \
+		set -e; \
+		docker build --no-cache -t $(BUILD_IMAGE) .; \
+		docker rm -f $(BUILD_CONTAINER) || true; \
+	fi
+	@if [ "$(BUILT)" == "" ]; then \
+		set -e; \
+		docker rm -f $(BUILD_CONTAINER) || true; \
+		docker run -v ${PWD}/ccache:/build/buildroot/ccache \
+			-v ${PWD}/dl:/build/buildroot/dl --name $(BUILD_CONTAINER) $(BUILD_IMAGE); \
+	fi
 
 output ccache dl:
 	mkdir -p $@
 
 clean:
-	rm -rf output
-	-docker rm dhyve-os-built
+	$(RM) -r output
+	-docker rm -f $(BUILD_CONTAINER)
 
 distclean: clean
-	rm -rf ccache dl
-	-docker rmi dhyve-os-build
+	$(RM) -r ccache dl
+	-docker rmi $(BUILD_IMAGE)
 
-.phony: build clean distclean
+.PHONY: all build clean distclean
