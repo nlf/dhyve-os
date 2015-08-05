@@ -6,7 +6,7 @@
 start() {
     echo -n "Configuring sysctl: "
     umask 077
-    sysctl -p /etc/sysctl.conf
+    sysctl -p /etc/sysctl.conf >/dev/null 2>&1
     [ $? = 0 ] && echo "OK" || echo "FAIL"
 }
 stop() {
