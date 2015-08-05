@@ -9,6 +9,7 @@ start() {
   local magic="dhyve, please format-me"
   local label=dhyve-data
   local datapart=$(blkid | grep dhyve-data | awk -F: '{print $1}')
+  local swapdevice=$(fdisk -l | grep "Linux swap" | awk '{print $1}')
 
   if [ -z "$datapart" ]; then
     local unpartitioned=$(fdisk -l | grep "doesn't contain a valid partition table" | head -n 1 | sed 's/Disk \(.*\) doesn.*/\1/')
@@ -56,6 +57,10 @@ start() {
       chmod 600 /home/docker/.ssh/authorized_keys
       rm -f '/home/docker/dhyve, please format-me'
     fi
+  fi
+
+  if [ -n "$swapdevice" ]; then
+    swapon "$swapdevice"
   fi
 
   echo "OK"
