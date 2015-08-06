@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+        echo -n "Starting crond: "
+        start-stop-daemon -S -q -m -b -p /var/run/crond.pid --exec /usr/sbin/crond -- -f -L /var/log/crond.log
+        [ $? = 0 ] && echo "OK" || echo "FAIL"
+        ;;
+    stop)
+        echo -n "Stopping crond: "
+        start-stop-daemon -K -q -p /var/run/crond.pid
+        [ $? = 0 ] && echo "OK" || echo "FAIL"
+        ;;
+    restart)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        ;;
+esac

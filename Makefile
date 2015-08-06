@@ -7,9 +7,11 @@ SOURCES := Dockerfile bin/build_dhyve \
 	rootfs/etc/init.d/S41automount-nfs \
 	rootfs/etc/init.d/S51docker \
 	rootfs/etc/init.d/S52sysctl \
+	rootfs/etc/init.d/S60crond \
 	rootfs/etc/profile.d/dhyve.sh \
 	rootfs/etc/sudoers.d/docker \
-	rootfs/etc/sysctl.conf
+	rootfs/etc/sysctl.conf \
+	rootfs/var/spool/cron/crontabs/root
 
 BUILD_IMAGE     := dhyve-os-builder
 BUILD_CONTAINER := dhyve-os-built
@@ -29,11 +31,11 @@ build: $(SOURCES) | ccache dl
 	@if [ "$(SRC_UPDATED)" -gt "$(IMG_CREATED)" ]; then \
 		set -e; \
 		docker build --no-cache -t $(BUILD_IMAGE) .; \
-		docker rm -f $(BUILD_CONTAINER) || true; \
+		(docker rm -f $(BUILD_CONTAINER) || true); \
 	fi
 	@if [ "$(BUILT)" == "" ]; then \
 		set -e; \
-		docker rm -f $(BUILD_CONTAINER) || true; \
+		(docker rm -f $(BUILD_CONTAINER) || true); \
 		docker run -v ${PWD}/ccache:/build/buildroot/ccache \
 			-v ${PWD}/dl:/build/buildroot/dl --name $(BUILD_CONTAINER) $(BUILD_IMAGE); \
 	fi
