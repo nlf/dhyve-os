@@ -1,1 +1,1 @@
-*/15 * * * * /usr/bin/sntp -M 128 pool.ntp.org
+*/15 * * * * /usr/bin/sntp -M 128 -s -S pool.ntp.org
