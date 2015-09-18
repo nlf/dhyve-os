@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y unzip \
 ENV ROOTFS /overlay
 
 RUN mkdir -p /build
-ENV BUILDROOT_VERSION 20150824
+ENV BUILDROOT_VERSION 20150916
 RUN curl -L -o /build/buildroot.tar.bz2 http://buildroot.uclibc.org/downloads/snapshots/buildroot-$BUILDROOT_VERSION.tar.bz2 && \
     cd /build && \
     tar xf buildroot.tar.bz2 && \
@@ -21,7 +21,7 @@ RUN curl -L -o /build/buildroot.tar.bz2 http://buildroot.uclibc.org/downloads/sn
 
 # Add docker to our overlay
 RUN mkdir -p $ROOTFS/usr/local/bin
-ENV DOCKER_VERSION 1.8.1
+ENV DOCKER_VERSION 1.8.2
 RUN curl -L -o $ROOTFS/usr/local/bin/docker https://get.docker.io/builds/Linux/x86_64/docker-$DOCKER_VERSION && \
     chmod +x $ROOTFS/usr/local/bin/docker
 
