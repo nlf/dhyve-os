@@ -13,10 +13,11 @@ RUN apt-get update && apt-get install -y unzip \
 ENV ROOTFS /overlay
 
 RUN mkdir -p /build
-ENV BUILDROOT_VERSION 20151106
-RUN curl -L -o /build/buildroot.tar.bz2 http://buildroot.uclibc.org/downloads/snapshots/buildroot-$BUILDROOT_VERSION.tar.bz2 && \
+ENV BUILDROOT_VERSION 2015.11
+RUN curl -L -o /build/buildroot.tar.bz2 http://buildroot.uclibc.org/downloads/buildroot-$BUILDROOT_VERSION.tar.bz2 && \
     cd /build && \
     tar xf buildroot.tar.bz2 && \
+    mv buildroot-$BUILDROOT_VERSION buildroot && \
     rm /build/buildroot.tar.bz2
 
 # Add docker to our overlay
@@ -26,7 +27,7 @@ RUN curl -L -o $ROOTFS/usr/bin/docker https://get.docker.io/builds/Linux/x86_64/
     chmod +x $ROOTFS/usr/bin/docker
 
 # Copy our custom overlay
-ENV VERSION 1.4.0
+ENV VERSION 1.5.0
 COPY rootfs $ROOTFS
 RUN echo $VERSION > $ROOTFS/etc/version
 
