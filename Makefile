@@ -11,6 +11,7 @@ SOURCES := Dockerfile bin/build_dhyve \
 	rootfs/etc/profile.d/dhyve.sh \
 	rootfs/etc/sudoers.d/docker \
 	rootfs/etc/sysctl.conf \
+	rootfs/etc/resolv.conf \
 	rootfs/var/spool/cron/crontabs/root
 
 BUILD_IMAGE     := dhyve-os-builder
