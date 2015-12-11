@@ -21,7 +21,7 @@ RUN curl -L -o /build/buildroot.tar.bz2 http://buildroot.uclibc.org/downloads/sn
 
 # Add docker to our overlay
 RUN mkdir -p $ROOTFS/usr/bin
-ENV DOCKER_VERSION 1.9.0
+ENV DOCKER_VERSION 1.9.1
 RUN curl -L -o $ROOTFS/usr/bin/docker https://get.docker.io/builds/Linux/x86_64/docker-$DOCKER_VERSION && \
     chmod +x $ROOTFS/usr/bin/docker
 
