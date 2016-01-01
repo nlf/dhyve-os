@@ -7,11 +7,9 @@
 start() {
   echo -n "Automounting: "
   local magic="dhyve, please format-me"
-  local label=dhyve-data
-  local datapart=$(blkid | grep dhyve-data | awk -F: '{print $1}')
-  local swapdevice=$(fdisk -l | grep "Linux swap" | awk '{print $1}')
+  vgchange -ay
 
-  if [ -z "$datapart" ]; then
+  if [ ! -b "/dev/docker/user" ]; then
     local unpartitioned=$(fdisk -l | grep "doesn't contain a valid partition table" | head -n 1 | sed 's/Disk \(.*\) doesn.*/\1/')
 
     if [ -n "$unpartitioned" ]; then
@@ -19,39 +17,45 @@ start() {
 
       if [ "$header" == "$magic" ]; then
         dd if=$unpartitioned of=/userdata.tar bs=1 count=4096 2>/dev/null
-        (echo n; echo p; echo 2; echo ;echo +1000M; echo t; echo 82; echo n; echo p; echo 1; echo ;echo ;echo w) | fdisk $unpartitioned
+        (echo n; echo p; echo 1; echo ;echo ; echo t; echo 8e; echo w) | fdisk $unpartitioned
 
         local timer=0
-        while [ "$timer" -lt 10 -a \(! -b "${unpartitioned}1" -o ! -b "${unpartitioned}2" \)]; do
+        while [ "$timer" -lt 10 -a \(! -b "${unpartitioned}1" \)]; do
           timer=$((timer + 1))
           sleep 1
         done
 
-        mkswap "${unpartitioned}2"
-        swapon "${unpartitioned}2"
-        datapart=$(echo "${unpartitioned}1")
-        mkfs.ext4 -L $label $datapart
+        pvcreate "${unpartitioned}1"
+        vgcreate docker "${unpartitioned}1"
+        lvcreate -L 1G -n swap docker
+        mkswap "/dev/docker/swap"
+        swapon "/dev/docker/swap"
+
+        lvcreate -L 1G -n user docker
+        mkfs.xfs /dev/docker/user
+
+        lvcreate -l 10%VG -n metadata docker
+        lvcreate -l 100%VG -n data docker
       fi
     fi
   fi
 
-  if [ -n "$datapart" ]; then
-    local partname=$(echo "$datapart" | sed 's/.*\///')
-    mkdir -p /mnt/$partname
-    mount $datapart /mnt/$partname 2>/dev/null
-    mkdir -p /mnt/$partname/var/lib/docker
-    mkdir -p /mnt/$partname/etc
-    mkdir -p /mnt/$partname/work/etc
+  if [ -b "/dev/docker/user" ]; then
+    mkdir -p /mnt/user
+    mount /dev/docker/user /mnt/user 2>/dev/null
+    mkdir -p /mnt/user/var/lib/docker
+    mkdir -p /mnt/user/etc
+    mkdir -p /mnt/user/work/etc
 
-    mount -t overlay overlay -o lowerdir=/etc,upperdir=/mnt/$partname/etc,workdir=/mnt/$partname/work/etc /etc
-    ln -sf /mnt/$partname/var/lib/docker /var/lib/docker
+    mount -t overlay overlay -o lowerdir=/etc,upperdir=/mnt/user/etc,workdir=/mnt/user/work/etc /etc
+    ln -sf /mnt/user/var/lib/docker /var/lib/docker
 
     if [ -e "/userdata.tar" ]; then
-      mv /userdata.tar /mnt/$partname/
+      mv /userdata.tar /mnt/user/
     fi
 
-    if [ -e "/mnt/${partname}/userdata.tar" ]; then
-      tar xf /mnt/${partname}/userdata.tar -C /home/docker >/var/log/userdata.log 2>&1
+    if [ -e "/mnt/user/userdata.tar" ]; then
+      tar xf /mnt/user/userdata.tar -C /home/docker >/var/log/userdata.log 2>&1
       chown -R docker:docker /home/docker
       chmod 700 /home/docker/.ssh
       chmod 600 /home/docker/.ssh/authorized_keys
@@ -59,8 +63,8 @@ start() {
     fi
   fi
 
-  if [ -n "$swapdevice" ]; then
-    swapon "$swapdevice"
+  if [ -b "/dev/docker/swap" ]; then
+    swapon /dev/docker/swap
   fi
 
   echo "OK"
