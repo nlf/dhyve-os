@@ -7,64 +7,56 @@
 start() {
   echo -n "Automounting: "
   local magic="dhyve, please format-me"
-  vgchange -ay
 
-  if [ ! -b "/dev/docker/user" ]; then
-    local unpartitioned=$(fdisk -l | grep "doesn't contain a valid partition table" | head -n 1 | sed 's/Disk \(.*\) doesn.*/\1/')
+  if [ ! -b "/dev/vda1" -o ! -b "/dev/vda2" -o ! -b "/dev/vda3" ]; then
+    local header=$(dd if=/dev/vda bs=1 count=${#magic} 2>/dev/null)
 
-    if [ -n "$unpartitioned" ]; then
-      local header=$(dd if=$unpartitioned bs=1 count=${#magic} 2>/dev/null)
+    if [ "$header" == "$magic" ]; then
+      dd if=/dev/vda of=/userdata.tar bs=1 count=4096 2>/dev/null
+      (echo n; echo p; echo 3; echo ;echo +1000M; echo t; echo 82;echo n; echo p; echo 2; echo ; echo +10M; echo n; echo p; echo 1;echo ;echo ;echo w) | fdisk /dev/vda
 
-      if [ "$header" == "$magic" ]; then
-        dd if=$unpartitioned of=/userdata.tar bs=1 count=4096 2>/dev/null
-        (echo n; echo p; echo 1; echo ;echo ; echo t; echo 8e; echo w) | fdisk $unpartitioned
+      local timer=0
+      while [ "$timer" -lt 10 -a \(! -b "/dev/vda1" -o ! -b "/dev/vda2" -o ! -b "/dev/vda3" \)]; do
+        timer=$((timer + 1))
+        sleep 1
+      done
 
-        local timer=0
-        while [ "$timer" -lt 10 -a \(! -b "${unpartitioned}1" \)]; do
-          timer=$((timer + 1))
-          sleep 1
-        done
+      mkswap /dev/vda3
+      swapon /dev/vda3
 
-        pvcreate "${unpartitioned}1"
-        vgcreate docker "${unpartitioned}1"
-        lvcreate -L 1G -n swap docker
-        mkswap "/dev/docker/swap"
-        swapon "/dev/docker/swap"
-
-        lvcreate -L 1G -n user docker
-        mkfs.xfs /dev/docker/user
-
-        lvcreate -l 10%VG -n metadata docker
-        lvcreate -l 100%VG -n data docker
-      fi
+      mkfs.btrfs /dev/vda1
+      mkfs.ext4 /dev/vda2
     fi
   fi
 
-  if [ -b "/dev/docker/user" ]; then
+  if [ -b "/dev/vda1" ]; then
+    mkdir -p /var/lib/docker
+    mount /dev/vda1 /var/lib/docker 2>/dev/null
+  fi
+
+  if [ -b "/dev/vda2" ]; then
     mkdir -p /mnt/user
-    mount /dev/docker/user /mnt/user 2>/dev/null
-    mkdir -p /mnt/user/var/lib/docker
+    mount /dev/vda2 /mnt/user 2>/dev/null
     mkdir -p /mnt/user/etc
     mkdir -p /mnt/user/work/etc
-
     mount -t overlay overlay -o lowerdir=/etc,upperdir=/mnt/user/etc,workdir=/mnt/user/work/etc /etc
-    ln -sf /mnt/user/var/lib/docker /var/lib/docker
+
+    mkdir -p /mnt/user/home
+    mkdir -p /mnt/user/work/home
+    mount -t overlay overlay -o lowerdir=/home/docker,upperdir=/mnt/user/home,workdir=/mnt/user/work/home /home/docker
 
     if [ -e "/userdata.tar" ]; then
-      mv /userdata.tar /mnt/user/
-    fi
-
-    if [ -e "/mnt/user/userdata.tar" ]; then
-      tar xf /mnt/user/userdata.tar -C /home/docker >/var/log/userdata.log 2>&1
+      tar xf /userdata.tar -C /home/docker >/var/log/userdata.log 2>&1
       chown -R docker:docker /home/docker
       chmod 700 /home/docker/.ssh
       chmod 600 /home/docker/.ssh/authorized_keys
       rm -f '/home/docker/dhyve, please format-me'
+      rm -f /userdata.tar
     fi
   fi
 
-  if [ -b "/dev/docker/swap" ]; then
-    swapon /dev/docker/swap
+  if [ -b "/dev/vda3" ]; then
+    swapon /dev/vda3
   fi
 
   echo "OK"
