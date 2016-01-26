@@ -9,8 +9,7 @@ CGROUPS="perf_event net_cls freezer devices blkio memory cpuacct cpuset cpu"
 
 start() {
     export DOCKER_RAMDISK=true
-    DOCKER_ARGS="$DOCKER_ARGS -d"
-
+    DOCKER_ARGS="$DOCKER_ARGS --ip=$(ifconfig eth0 | awk '/inet addr/{print substr($2,6)}')"
     echo -n "Starting docker: "
     umask 077
 
@@ -22,7 +21,7 @@ start() {
     done
 
     start-stop-daemon --start --quiet --background --make-pidfile --pidfile /var/run/docker.pid \
-        --startas /bin/sh -- -c "exec  /usr/bin/docker $DOCKER_ARGS >/var/log/docker.log 2>&1"
+        --startas /bin/sh -- -c "exec /usr/bin/docker daemon $DOCKER_ARGS >/var/log/docker.log 2>&1"
     [ $? = 0 ] && echo "OK" || echo "FAIL"
 }
 stop() {
