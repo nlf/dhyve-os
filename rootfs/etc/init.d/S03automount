@@ -24,7 +24,7 @@ start() {
       mkswap /dev/vda3
       swapon /dev/vda3
 
-      mkfs.btrfs /dev/vda1
+      mkfs.btrfs -m single /dev/vda1
       mkfs.ext4 /dev/vda2
     fi
   fi
