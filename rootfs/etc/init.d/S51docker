@@ -12,6 +12,8 @@ start() {
     DOCKER_ARGS="$DOCKER_ARGS --ip=$(ifconfig eth0 | awk '/inet addr/{print substr($2,6)}')"
     echo -n "Starting docker: "
     umask 077
+    ulimit -n 1048576
+    ulimit -p 1048576
 
     mkdir -p /sys/fs/cgroup
     mount -t tmpfs none /sys/fs/cgroup
