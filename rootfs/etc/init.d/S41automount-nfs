@@ -5,6 +5,11 @@
 
 start() {
   echo -n "Mounting NFS share:"
+  local share=$(cat /proc/cmdline | sed -n 's/^.*share=\([^ ]\+\).*$/\1/p')
+  if [ -z "$share" ]; then
+    share="/Users"
+  fi
+
   local timer=0
   local gateway=""
   while [ "$timer" -lt 10 -a -z "$gateway" ]; do
@@ -14,8 +19,8 @@ start() {
   done
 
   if [ -n "$gateway" ]; then
-    mkdir -p /Users
-    mount ${gateway}:/Users /Users -o rw,async,noatime,rsize=32768,wsize=32768,proto=tcp
+    mkdir -p "$share"
+    mount ${gateway}:"$share" "$share" -o rw,async,noatime,rsize=32768,wsize=32768,proto=tcp
     echo "OK"
   else
     echo "FAIL"
@@ -23,8 +28,13 @@ start() {
 }
 
 stop() {
-  if [ -d /Users ]; then
-    umount -f /Users
+  local share=$(cat /proc/cmdline | sed -n 's/^.*share=\([^ ]\+\).*$/\1/p')
+  if [ -z "$share" ]; then
+    share="/Users"
+  fi
+
+  if [ -d "$share" ]; then
+    umount -f "$share"
   fi
 }
 
