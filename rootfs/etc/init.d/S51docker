@@ -22,7 +22,7 @@ start() {
       mount -t cgroup -o $i none /sys/fs/cgroup/$i
     done
 
-    start-stop-daemon --start --quiet --background --make-pidfile --pidfile /var/run/docker.pid \
+    start-stop-daemon --start --quiet --background --pidfile /var/run/docker.pid \
         --startas /bin/sh -- -c "exec /usr/bin/docker daemon $DOCKER_ARGS >/var/log/docker.log 2>&1"
     [ $? = 0 ] && echo "OK" || echo "FAIL"
 }
