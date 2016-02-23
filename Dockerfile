@@ -23,7 +23,7 @@ ENV BUILDROOT_VERSION 2015.11.1
 RUN wget -qO- http://buildroot.uclibc.org/downloads/buildroot-$BUILDROOT_VERSION.tar.bz2 | tar xj && \
     mv buildroot-$BUILDROOT_VERSION /tmp/buildroot
 
-ENV DOCKER_VERSION 1.10.1
+ENV DOCKER_VERSION 1.10.2
 RUN wget -qO /tmp/rootfs/usr/bin/docker https://get.docker.io/builds/Linux/x86_64/docker-${DOCKER_VERSION} && \
     chmod +x /tmp/rootfs/usr/bin/docker
 
