@@ -31,7 +31,7 @@ start() {
 
   if [ -b "/dev/vda1" ]; then
     mkdir -p /var/lib/docker
-    mount /dev/vda1 /var/lib/docker 2>/dev/null
+    mount -o noatime,discard,ssd,autodefrag /dev/vda1 /var/lib/docker 2>/dev/null
   fi
 
   if [ -b "/dev/vda2" ]; then
