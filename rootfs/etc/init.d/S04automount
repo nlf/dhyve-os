@@ -6,58 +6,48 @@
 
 start() {
   echo -n "Automounting: "
-  local magic="dhyve, please format-me"
 
-  if [ ! -b "/dev/vda1" -o ! -b "/dev/vda2" -o ! -b "/dev/vda3" ]; then
-    local header=$(dd if=/dev/vda bs=1 count=${#magic} 2>/dev/null)
-
-    if [ "$header" == "$magic" ]; then
-      dd if=/dev/vda of=/userdata.tar bs=1 count=4096 2>/dev/null
-      (echo n; echo p; echo 3; echo ;echo +1000M; echo t; echo 82;echo n; echo p; echo 2; echo ; echo +10M; echo n; echo p; echo 1;echo ;echo ;echo w) | fdisk /dev/vda
-
-      local timer=0
-      while [ "$timer" -lt 10 -a \(! -b "/dev/vda1" -o ! -b "/dev/vda2" -o ! -b "/dev/vda3" \)]; do
-        timer=$((timer + 1))
-        sleep 1
-      done
-
-      mkswap /dev/vda3
-      swapon /dev/vda3
-
-      mkfs.btrfs -m single /dev/vda1
-      mkfs.ext4 /dev/vda2
-    fi
+  fdisk -l /dev/sda | grep -q "Unknown"
+  if [ $? -eq 0 ]; then
+    (echo d;echo n; echo p; echo 1; echo ;echo +50M; echo n; echo p; echo 2;echo ;echo +1024M; echo t; echo 2; echo 82; echo n; echo p; echo 3; echo ;echo ;echo w) | fdisk /dev/sda
+    local timer=0
+    while [ "$timer" -lt 10 -a \(! -b "/dev/sda1" -o ! -b "/dev/sda2" -o ! -b "/dev/sda3" \)]; do
+      timer=$((timer + 1))
+      sleep 1
+    done
+    mkfs.ext4 /dev/sda1
+    mkswap /dev/sda2
+    mkfs.btrfs -m single /dev/sda3
   fi
 
-  if [ -b "/dev/vda1" ]; then
+  if [ -b "/dev/sda1" ]; then
+    mkdir -p /mnt/overlay
+    mount /dev/sda1 /mnt/overlay 2>/dev/null
+    mkdir -p /mnt/overlay/etc
+    mkdir -p /mnt/overlay/work/etc
+    mkdir -p /mnt/overlay/usr/bin
+    mkdir -p /mnt/overlay/work/usr/bin
+    mount -t overlay overlay -o lowerdir=/etc,upperdir=/mnt/overlay/etc,workdir=/mnt/overlay/work/etc /etc
+    mount -t overlay overlay -o lowerdir=/usr/bin,upperdir=/mnt/overlay/usr/bin,workdir=/mnt/overlay/work/usr/bin /usr/bin
+  fi
+
+  if [ -b "/dev/sda2" ]; then
+    swapon /dev/sda2
+  fi
+
+  if [ -b "/dev/sda3" ]; then
     mkdir -p /var/lib/docker
-    mount -o noatime,discard,ssd,autodefrag /dev/vda1 /var/lib/docker 2>/dev/null
+    mount -o noatime,discard,ssd,autodefrag /dev/sda3 /var/lib/docker 2>/dev/null
   fi
 
-  if [ -b "/dev/vda2" ]; then
-    mkdir -p /mnt/user
-    mount /dev/vda2 /mnt/user 2>/dev/null
-    mkdir -p /mnt/user/etc
-    mkdir -p /mnt/user/work/etc
-    mount -t overlay overlay -o lowerdir=/etc,upperdir=/mnt/user/etc,workdir=/mnt/user/work/etc /etc
-
-    mkdir -p /mnt/user/home
-    mkdir -p /mnt/user/work/home
-    mount -t overlay overlay -o lowerdir=/home/docker,upperdir=/mnt/user/home,workdir=/mnt/user/work/home /home/docker
-
-    if [ -e "/userdata.tar" ]; then
-      tar xf /userdata.tar -C /home/docker >/var/log/userdata.log 2>&1
-      chown -R docker:docker /home/docker
-      chmod 700 /home/docker/.ssh
-      chmod 600 /home/docker/.ssh/authorized_keys
-      rm -f '/home/docker/dhyve, please format-me'
-      rm -f /userdata.tar
-    fi
+  local user_name=$(cat /proc/cmdline | sed -n 's/^.*user_name=\([^ ]\+\).*$/\1/p')
+  local user_id=$(cat /proc/cmdline | sed -n 's/^.*user_id=\([^ ]\+\).*$/\1/p')
+  mkdir -p "/Users/${user_name}"
+  cut -d: -f1 /etc/passwd | grep -q "$user_name"
+  if [ $? -ne 0 ]; then
+    adduser -u "$user_id" -G staff -s /bin/sh -D -h "/Users/${user_name}" "$user_name"
   fi
-
-  if [ -b "/dev/vda3" ]; then
-    swapon /dev/vda3
-  fi
+  mount -t 9p -o version=9p2000 -o trans=virtio -o access=any -o uname="$user_name" -o dfltuid="$user_id" -o dfltgid=20 host "/Users/${user_name}"
 
   echo "OK"
 }
