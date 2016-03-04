@@ -47,7 +47,13 @@ start() {
   if [ $? -ne 0 ]; then
     adduser -u "$user_id" -G staff -s /bin/sh -D -h "/Users/${user_name}" "$user_name"
   fi
-  mount -t 9p -o version=9p2000 -o trans=virtio -o access=any -o uname="$user_name" -o dfltuid="$user_id" -o dfltgid=20 host "/Users/${user_name}"
+  mount -t 9p -o trans=virtio -o access=any -o uname="$user_name" host "/Users/${user_name}"
+
+  mkdir -p /home/docker/.ssh
+  chmod 700 /home/docker/.ssh
+  cp "/Users/${user_name}/.dlite/docker.pub" /home/docker/.ssh/authorized_keys
+  chown -R docker:docker /home/docker/.ssh
+  chmod 600 /home/docker/.ssh/authorized_keys
 
   echo "OK"
 }
