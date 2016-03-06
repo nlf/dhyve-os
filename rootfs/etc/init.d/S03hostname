@@ -26,7 +26,7 @@ start() {
   if [ $? -eq 0 ]; then
     local dns_server=$(cat /proc/cmdline | sed -n 's/^.*dns_server=\([^ ]\+\).*$/\1/p')
     if [ -n "$dns_server" ]; then
-      echo "$dns_server" > /etc/resolv.conf
+      echo "nameserver $dns_server" > /etc/resolv.conf
     fi
   fi
 

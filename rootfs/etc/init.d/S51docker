@@ -16,7 +16,7 @@ start() {
     fi
 
     export DOCKER_RAMDISK=true
-    local extra_args=$(cat /proc/cmdline | sed -n 's/^.*docker_extra=\([^ ]\+\).*$/\1/p')
+    local extra_args=$(cat /proc/cmdline | sed -n 's/^.*docker_extra=\(.\+\)$/\1/p')
     DOCKER_ARGS="$DOCKER_ARGS --ip=$(ifconfig eth0 | awk '/inet addr/{print substr($2,6)}') ${extra_args}"
     echo -n "Starting docker: "
     umask 077
