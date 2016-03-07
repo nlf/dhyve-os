@@ -47,7 +47,7 @@ start() {
   if [ $? -ne 0 ]; then
     adduser -u "$user_id" -G staff -s /bin/sh -D -h "/Users/${user_name}" "$user_name"
   fi
-  mount -t 9p -o trans=virtio -o access=any -o uname="$user_name" host "/Users/${user_name}"
+  mount -t 9p -o trans=virtio host "/Users/${user_name}"
 
   mkdir -p /home/docker/.ssh
   chmod 700 /home/docker/.ssh

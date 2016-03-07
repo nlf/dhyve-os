@@ -1,15 +1,15 @@
 # DhyveOS
 
-DhyveOS is a lightweight Linux distribution made specifically to run [Docker](https://www.docker.com/) containers within the [xhyve](https://github.com/mist64/xhyve) hypervisor on OS X. It runs completely from RAM, is a small ~15MB download and boots in ~5s (YMMV).
+DhyveOS is a lightweight Linux distribution made specifically to run [Docker](https://www.docker.com/) containers within the [xhyve](https://github.com/mist64/xhyve) hypervisor on OS X. It runs completely from RAM, is a small ~8MB download and boots in ~5s (YMMV).
 
 ## Features
 
-* NFS share automounts to /Users
+* Uses 9P over virtio to mount your user's home directory so volume mappings work.
 * Docker runs on port 2375 without TLS
-* Designed for use with [dhyve](https://github.com/nlf/dhyve)
+* Designed for use with [dlite](https://github.com/nlf/dlite)
 * Default root password: dhyve
 * Default docker user password: docker
-* Uses the devicemapper storage driver configured in direct-lvm mode with XFS backed volumes
+* Uses btrfs for the docker filesystem
 
 ## Building
 
