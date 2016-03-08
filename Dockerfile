@@ -23,6 +23,10 @@ ENV BUILDROOT_VERSION 2016.02
 RUN wget -qO- http://buildroot.uclibc.org/downloads/buildroot-$BUILDROOT_VERSION.tar.bz2 | tar xj && \
     mv buildroot-$BUILDROOT_VERSION /tmp/buildroot
 
+RUN mkdir -p /tmp/rootfs/usr/bin && \
+    wget -qO /tmp/rootfs/usr/bin/docker http://get.docker.com/builds/Linux/x86_64/docker-latest && \
+    chmod +x /tmp/rootfs/usr/bin/docker
+
 RUN ln -s /tmp/config/buildroot /tmp/buildroot/.config
 
 WORKDIR /tmp/buildroot

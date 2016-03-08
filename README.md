@@ -1,6 +1,6 @@
 # DhyveOS
 
-DhyveOS is a lightweight Linux distribution made specifically to run [Docker](https://www.docker.com/) containers within the [xhyve](https://github.com/mist64/xhyve) hypervisor on OS X. It runs completely from RAM, is a small ~8MB download and boots in ~5s (YMMV).
+DhyveOS is a lightweight Linux distribution made specifically to run [Docker](https://www.docker.com/) containers within the [xhyve](https://github.com/mist64/xhyve) hypervisor on OS X. It runs completely from RAM, is a small ~14MB download and boots in ~5s (YMMV).
 
 ## Features
 
