@@ -23,7 +23,7 @@ Running `make clean` will remove the output directory as well as the intermediat
 
 If you'd like to tweak the buildroot configuration, run `make config`. When you save changes they will be copied to the `config` directory appropriately.
 
-To make changes to the kernel configuration, run `make kernel-config`. When saving, make sure to specify the filename `/tmp/config/kernel` or your changes will be lost.
+To make changes to the kernel configuration, run `make linux-config`. When saving, make sure to specify the filename `/tmp/config/kernel` or your changes will be lost.
 
 ## Caveat Emptor
 
