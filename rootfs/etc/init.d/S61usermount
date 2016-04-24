@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Create the user directory and mount the NFS share
+#
+
+start() {
+  echo -n "Mounting user share: "
+
+  local user_name=$(cat /proc/cmdline | sed -n 's/^.*user_name=\([^ ]\+\).*$/\1/p')
+  local user_id=$(cat /proc/cmdline | sed -n 's/^.*user_id=\([^ ]\+\).*$/\1/p')
+  mkdir -p "/Users/${user_name}"
+  cut -d: -f1 /etc/passwd | grep -q "$user_name"
+  if [ $? -ne 0 ]; then
+    adduser -u "$user_id" -G staff -s /bin/sh -D -h "/Users/${user_name}" "$user_name"
+  fi
+  mount -t nfs "192.168.64.1:/Users/${user_name}" "/Users/${user_name}"
+
+  echo "OK"
+}
+
+stop() {
+  echo ""
+}
+
+restart() {
+  echo ""
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart|reload)
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?

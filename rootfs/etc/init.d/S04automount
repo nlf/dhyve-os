@@ -40,6 +40,13 @@ start() {
     mount -o noatime,discard,ssd,autodefrag /dev/sda3 /var/lib/docker 2>/dev/null
   fi
 
+  local ssh_key=$(cat /proc/cmdline | sed -n 's/^.*ssh_key=\([^ ]\+\).*$/\1/p' | base64 -d)
+  mkdir -p /home/docker/.ssh
+  echo "$ssh_key" > /home/docker/.ssh/authorized_keys
+  chown -R docker:docker /home/docker/.ssh
+  chmod 0700 /home/docker/.ssh
+  chmod 0600 /home/docker/.ssh/authorized_keys
+
   local user_name=$(cat /proc/cmdline | sed -n 's/^.*user_name=\([^ ]\+\).*$/\1/p')
   local user_id=$(cat /proc/cmdline | sed -n 's/^.*user_id=\([^ ]\+\).*$/\1/p')
   mkdir -p "/Users/${user_name}"
@@ -47,13 +54,6 @@ start() {
   if [ $? -ne 0 ]; then
     adduser -u "$user_id" -G staff -s /bin/sh -D -h "/Users/${user_name}" "$user_name"
   fi
-  mount -t 9p -o trans=virtio -o msize=262144 host "/Users/${user_name}"
-
-  mkdir -p /home/docker/.ssh
-  chmod 700 /home/docker/.ssh
-  cp "/Users/${user_name}/.dlite/docker.pub" /home/docker/.ssh/authorized_keys
-  chown -R docker:docker /home/docker/.ssh
-  chmod 600 /home/docker/.ssh/authorized_keys
 
   echo "OK"
 }

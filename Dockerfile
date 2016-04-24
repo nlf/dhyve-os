@@ -24,8 +24,8 @@ RUN wget -qO- http://buildroot.uclibc.org/downloads/buildroot-$BUILDROOT_VERSION
     mv buildroot-$BUILDROOT_VERSION /tmp/buildroot
 
 RUN mkdir -p /tmp/rootfs/usr/bin && \
-    wget -qO /tmp/rootfs/usr/bin/docker http://get.docker.com/builds/Linux/x86_64/docker-latest && \
-    chmod +x /tmp/rootfs/usr/bin/docker
+    cd /tmp; wget -qO- https://get.docker.io/builds/Linux/x86_64/docker-latest.tgz | tar xz && \
+    mv docker/* /tmp/rootfs/usr/bin/
 
 RUN ln -s /tmp/config/buildroot /tmp/buildroot/.config
 
