@@ -23,7 +23,7 @@ ENV BUILDROOT_VERSION 2016.02
 RUN wget -qO- http://buildroot.uclibc.org/downloads/buildroot-$BUILDROOT_VERSION.tar.bz2 | tar xj && \
     mv buildroot-$BUILDROOT_VERSION /tmp/buildroot
 
-ENV DOCKER_VERSION 1.11.0
+ENV DOCKER_VERSION 1.11.1
 RUN cd /tmp; wget -qO- https://get.docker.io/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz | tar xz && \
     mv docker/* /tmp/rootfs/usr/bin/
 
